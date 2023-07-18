@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
-	"time"
 )
 
 // DataSource represents a Grafana data source.
@@ -181,94 +180,4 @@ func ExtractHeadersFromJSONData(jsonData, secureJSONData map[string]interface{})
 	}
 
 	return jsonData, secureJSONData, headers
-}
-
-type DsQuery struct {
-	Queries []struct {
-		Datasource struct {
-			Type string `json:"type"`
-			UID  string `json:"uid"`
-		} `json:"datasource"`
-		EditorMode     string `json:"editorMode"`
-		Expr           string `json:"expr"`
-		Format         string `json:"format"`
-		IntervalFactor int    `json:"intervalFactor"`
-		LegendFormat   string `json:"legendFormat"`
-		Range          bool   `json:"range"`
-		Exemplar       bool   `json:"exemplar"`
-		RequestID      string `json:"requestId"`
-		UtcOffsetSec   int    `json:"utcOffsetSec"`
-		Interval       string `json:"interval"`
-		DatasourceID   int    `json:"datasourceId"`
-		IntervalMs     int    `json:"intervalMs"`
-		MaxDataPoints  int    `json:"maxDataPoints"`
-	} `json:"queries"`
-	Range struct {
-		From time.Time `json:"from"`
-		To   time.Time `json:"to"`
-		Raw  struct {
-			From time.Time `json:"from"`
-			To   time.Time `json:"to"`
-		} `json:"raw"`
-	} `json:"range"`
-	From string `json:"from"`
-	To   string `json:"to"`
-}
-
-type QueryResponse struct {
-	Results struct {
-		A struct {
-			Status int `json:"status"`
-			Frames []struct {
-				Schema struct {
-					Name  string `json:"name"`
-					RefID string `json:"refId"`
-					Meta  struct {
-						Type        string `json:"type"`
-						TypeVersion []int  `json:"typeVersion"`
-						Custom      struct {
-							ResultType string `json:"resultType"`
-						} `json:"custom"`
-						ExecutedQueryString string `json:"executedQueryString"`
-					} `json:"meta"`
-					Fields []struct {
-						Name     string `json:"name"`
-						Type     string `json:"type"`
-						TypeInfo struct {
-							Frame string `json:"frame"`
-						} `json:"typeInfo"`
-						Labels struct {
-							Name                  string `json:"__name__"`
-							CPU                   string `json:"cpu"`
-							DeploymentEnvironment string `json:"deployment_environment"`
-							Host                  string `json:"host"`
-							Job                   string `json:"job"`
-							PipelineID            string `json:"pipeline_id"`
-							ServiceName           string `json:"service_name"`
-						} `json:"labels,omitempty"`
-						Config struct {
-							DisplayNameFromDS string `json:"displayNameFromDS"`
-							Interval          int    `json:"interval"`
-						} `json:"config,omitempty"`
-					} `json:"fields"`
-				} `json:"schema"`
-				Data struct {
-					Values [][]int64 `json:"values"`
-				} `json:"data"`
-			} `json:"frames"`
-		} `json:"A"`
-	} `json:"results"`
-}
-
-func (c *Client) DatasourceQuery(q DsQuery) (*QueryResponse, error) {
-	req, err := json.Marshal(q)
-	if err != nil {
-		return nil, err
-	}
-	res := &QueryResponse{}
-	if err := c.request("POST", "api/ds/query", nil, req, res); err != nil {
-		return nil, err
-	}
-
-	return res, nil
 }
