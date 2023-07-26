@@ -13,6 +13,7 @@ type DsQuery struct {
 	Datasource     DsDatasource `json:"datasource"`
 	EditorMode     string       `json:"editorMode"`
 	Expr           string       `json:"expr"`
+	RefID          string       `json:"refId"`
 	Format         string       `json:"format"`
 	IntervalFactor int          `json:"intervalFactor"`
 	LegendFormat   string       `json:"legendFormat"`
