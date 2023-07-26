@@ -27,19 +27,19 @@ type DsQuery struct {
 }
 
 type DsRange struct {
-	From time.Time `json:"from"`
-	To   time.Time `json:"to"`
+	From time.Time `json:"from,omitempty"`
+	To   time.Time `json:"to,omitempty"`
 	Raw  struct {
-		From time.Time `json:"from"`
-		To   time.Time `json:"to"`
+		From *time.Time `json:"from,omitempty"`
+		To   *time.Time `json:"to,omitempty"`
 	} `json:"raw"`
 }
 
 type DsQueries struct {
 	Queries []DsQuery `json:"queries"`
-	Range   DsRange   `json:"range"`
-	From    string    `json:"from"`
-	To      string    `json:"to"`
+	Range   *DsRange  `json:"range"`
+	From    *string   `json:"from,omitempty"`
+	To      *string   `json:"to,omitempty"`
 }
 
 type Response struct {
