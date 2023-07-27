@@ -99,7 +99,7 @@ type Labels struct {
 }
 
 type Data struct {
-	Values [][]int64 `json:"values"`
+	Values [][]interface{} `json:"values"`
 }
 
 type Results struct {
