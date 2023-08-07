@@ -1,6 +1,7 @@
 package gapi
 
 import (
+	"context"
 	"encoding/json"
 	"time"
 )
@@ -106,13 +107,13 @@ type Results struct {
 	Results map[string]Response `json:"results"`
 }
 
-func (c *Client) DatasourceQuery(q DsQueries) (*Results, error) {
+func (c *Client) DatasourceQuery(ctx context.Context, q DsQueries) (*Results, error) {
 	req, err := json.Marshal(q)
 	if err != nil {
 		return nil, err
 	}
 	res := new(Results)
-	if err := c.request("POST", "api/ds/query", nil, req, res); err != nil {
+	if err := c.requestWithContext(ctx, "POST", "api/ds/query", nil, req, res); err != nil {
 		return nil, err
 	}
 

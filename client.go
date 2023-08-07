@@ -2,6 +2,7 @@ package gapi
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -93,6 +94,86 @@ func (c *Client) request(method, requestPath string, query url.Values, body []by
 		if err != nil {
 			return err
 		}
+
+		// Wait a bit if that's not the first request
+		if n != 0 {
+			if c.config.RetryTimeout == 0 {
+				c.config.RetryTimeout = time.Second * 5
+			}
+			time.Sleep(c.config.RetryTimeout)
+		}
+
+		resp, err = c.client.Do(req)
+
+		// If err is not nil, retry again
+		// That's either caused by client policy, or failure to speak HTTP (such as network connectivity problem). A
+		// non-2xx status code doesn't cause an error.
+		if err != nil {
+			continue
+		}
+
+		defer resp.Body.Close()
+
+		// read the body (even on non-successful HTTP status codes), as that's what the unit tests expect
+		bodyContents, err = ioutil.ReadAll(resp.Body)
+
+		// if there was an error reading the body, try again
+		if err != nil {
+			continue
+		}
+
+		shouldRetry, err := matchRetryCode(resp.StatusCode, retryStatusCodes)
+		if err != nil {
+			return err
+		}
+		if !shouldRetry {
+			break
+		}
+	}
+	if err != nil {
+		return err
+	}
+
+	if os.Getenv("GF_LOG") != "" {
+		log.Printf("response status %d with body %v", resp.StatusCode, string(bodyContents))
+	}
+
+	// check status code.
+	if resp.StatusCode >= 400 {
+		return fmt.Errorf("status: %d, body: %v", resp.StatusCode, string(bodyContents))
+	}
+
+	if responseStruct == nil {
+		return nil
+	}
+
+	err = json.Unmarshal(bodyContents, responseStruct)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (c *Client) requestWithContext(ctx context.Context, method, requestPath string, query url.Values, body []byte, responseStruct interface{}) error {
+	var (
+		req          *http.Request
+		resp         *http.Response
+		err          error
+		bodyContents []byte
+	)
+	retryStatusCodes := c.config.RetryStatusCodes
+	if len(retryStatusCodes) == 0 {
+		retryStatusCodes = []string{"429", "5xx"}
+	}
+
+	// retry logic
+	for n := 0; n <= c.config.NumRetries; n++ {
+		req, err = c.newRequest(method, requestPath, query, bytes.NewReader(body))
+		if err != nil {
+			return err
+		}
+		req = req.WithContext(ctx)
 
 		// Wait a bit if that's not the first request
 		if n != 0 {
