@@ -26,6 +26,7 @@ type DsQuery struct {
 	DatasourceID   int          `json:"datasourceId"`
 	IntervalMs     int          `json:"intervalMs"`
 	MaxDataPoints  int          `json:"maxDataPoints"`
+	MaxLines       int          `json:"maxLines"`
 }
 
 type DsRange struct {
